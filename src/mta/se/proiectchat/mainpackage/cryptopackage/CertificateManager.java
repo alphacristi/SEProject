@@ -48,7 +48,8 @@ public class CertificateManager {
             genCert.append(filename);
 
             ProcessBuilder genCertProcess = new ProcessBuilder("cmd.exe", "/c", genCert.toString());
-            genCertProcess.start();
+            Process genProcess = genCertProcess.start();
+            genProcess.waitFor();
 
         } catch (Exception e) {
             e.printStackTrace();
