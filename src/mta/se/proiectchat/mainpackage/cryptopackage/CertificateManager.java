@@ -4,6 +4,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+import java.security.cert.CertificateFactory;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
 
 /**
  * This is the class used for generation and management of certificate
@@ -125,4 +129,56 @@ public class CertificateManager {
         return privKey;
 
     }
+
+    /**
+     * This is the class which transforms an byte[] certificate to a X509 structure certificate
+     *
+     * @param _certificate a byte array of certificate
+     * @return - a X509 certificate
+     */
+    public static X509Certificate loadFromByteArray(byte[] _certificate) {
+
+        X509Certificate certificate = null;
+
+        try {
+            CertificateFactory factory = CertificateFactory.getInstance("X.509");
+            InputStream inputStream = new ByteArrayInputStream(_certificate);
+            certificate = (X509Certificate) factory.generateCertificate(inputStream);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+
+            return certificate;
+        }
+
+
+    }
+
+    /**
+     * This method is used for reading a X509 format certificate and returns
+     * a byte[] of the DER econding
+     *
+     * @param certFilename - filename of the certificate
+     * @return - a byte[] of certificate
+     */
+    public static byte[] readCertificateFromFile(String certFilename) {
+
+        byte[] _certificate = null;
+
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+
+            FileInputStream inputStream = new FileInputStream(certFilename);
+            X509Certificate certificate = (X509Certificate) cf.generateCertificate(inputStream);
+            _certificate = certificate.getEncoded();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            return _certificate;
+        }
+
+    }
+
+
 }
