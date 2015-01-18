@@ -26,26 +26,23 @@ public class CallerConnection implements ISocketConnection {
     @Override
     public byte[] Read() {
 
+        int len;
+        byte[] dataReceived = null;
+
         try {
+
             DataInputStream streamForReceiving = new DataInputStream(socketUsed.getInputStream());
-            ReceivingMessage messageReceived = new ReceivingMessage(streamForReceiving);
-            Thread t1 = new Thread(messageReceived);
-            t1.start();
-            byte[] message;
-            while (true) {
-                if (messageReceived.dataReceived != null) {
-                    message = new byte[messageReceived.dataReceived.length];
-                    message = messageReceived.dataReceived;
-                    messageReceived.dataReceived = null;
-                    return message;
-                }
+            len = streamForReceiving.readInt();
+            dataReceived = new byte[len];
+            if (len > 0) {
+                streamForReceiving.readFully(dataReceived);
             }
         } catch (IOException e) {
             e.printStackTrace();
 
         }
 
-        return null;
+        return dataReceived;
     }
 
     @Override
