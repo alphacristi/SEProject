@@ -21,7 +21,7 @@ public class Records {
     public Records(){
         dataSize=1500;
         capturedData=null;
-        audioFormatUsed=null;
+        audioFormatUsed=new AudioFormat(8000.0f,16,1,true,true);
         pickupLineUsed=null;
     }
 
