@@ -20,6 +20,8 @@ public class Main {
 
           // sendData(messageToSend);
 
+        //   byte[] messageReceived=receiveData();
+
            Playback client2=new Playback();
            playMessage(client2,messageToSend);
        }
@@ -64,5 +66,18 @@ public class Main {
         catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static byte[] receiveData() {
+
+        try {
+            CallerConnection ex = new CallerConnection("127.0.0.1", 8012);
+            ex.Open();
+            byte[] dataReceived = ex.Read();
+            return dataReceived;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+         return null;
     }
 }
