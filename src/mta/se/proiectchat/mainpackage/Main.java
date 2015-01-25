@@ -2,6 +2,7 @@ package mta.se.proiectchat.mainpackage;
 
 import mta.se.proiectchat.mainpackage.audiopackage.Playback;
 import mta.se.proiectchat.mainpackage.audiopackage.Records;
+import mta.se.proiectchat.mainpackage.tcpconnctionpackage.CallerConnection;
 
 /**
  * This class which conaints main function - the entry point in program
@@ -16,6 +17,8 @@ public class Main {
        try {
            Records client = new Records();
            byte[] messageToSend=readMessage(client);
+
+          // sendData(messageToSend);
 
            Playback client2=new Playback();
            playMessage(client2,messageToSend);
@@ -44,6 +47,19 @@ public class Main {
         try{
             client.openLineForPlayback();
             client.play(dataToPlay);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static void sendData(byte[] dataToSend)
+    {
+        try {
+            CallerConnection ex = new CallerConnection("127.0.0.1", 8012);
+            ex.Open();
+            ex.Write(dataToSend);
         }
         catch (Exception e) {
             e.printStackTrace();

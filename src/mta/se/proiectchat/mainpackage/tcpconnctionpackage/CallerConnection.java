@@ -72,7 +72,7 @@ public class CallerConnection implements ISocketConnection {
         }
     }
 
-    CallerConnection(String ip, int port) {
+    public CallerConnection(String ip, int port) {
         this.ip = ip;
         this.port = port;
     }
