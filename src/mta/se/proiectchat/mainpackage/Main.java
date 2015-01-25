@@ -1,5 +1,6 @@
 package mta.se.proiectchat.mainpackage;
 
+import mta.se.proiectchat.mainpackage.audiopackage.Playback;
 import mta.se.proiectchat.mainpackage.audiopackage.Records;
 
 /**
@@ -15,6 +16,9 @@ public class Main {
        try {
            Records client = new Records();
            byte[] messageToSend=readMessage(client);
+
+           Playback client2=new Playback();
+           playMessage(client2,messageToSend);
        }
        catch (Exception e) {
            e.printStackTrace();
@@ -34,5 +38,15 @@ public class Main {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static void playMessage(Playback client,byte[] dataToPlay){
+        try{
+            client.openLineForPlayback();
+            client.play(dataToPlay);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
