@@ -11,4 +11,6 @@ public interface ISocketConnection {
     public void Write(byte[] information);
 
     public void Close();
+
+    public String getRemoteIP();
 }

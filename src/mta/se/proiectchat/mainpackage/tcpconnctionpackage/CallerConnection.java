@@ -72,6 +72,11 @@ public class CallerConnection implements ISocketConnection {
         }
     }
 
+    @Override
+    public String getRemoteIP() {
+        return this.socketUsed.getInetAddress().getHostAddress();
+    }
+
     public CallerConnection(String ip, int port) {
         this.ip = ip;
         this.port = port;

@@ -14,56 +14,51 @@ public class Main {
      */
     public static void main(String arvs[]) {
 
-       try {
-           Records client = new Records();
-           byte[] messageToSend=readMessage(client);
+        try {
+            Records client = new Records();
+            byte[] messageToSend = readMessage(client);
 
-          // sendData(messageToSend);
+            // sendData(messageToSend);
 
-        //   byte[] messageReceived=receiveData();
+            //   byte[] messageReceived=receiveData();
 
-           Playback client2=new Playback();
-           playMessage(client2,messageToSend);
-       }
-       catch (Exception e) {
-           e.printStackTrace();
-       }
+            Playback client2 = new Playback();
+            playMessage(client2, messageToSend);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
 
     }
 
 
-    public static byte[] readMessage(Records client){
+    public static byte[] readMessage(Records client) {
         try {
             client.openPickupLine();
             byte[] dataCaptured = client.captureAudioData();
             return dataCaptured;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    public static void playMessage(Playback client,byte[] dataToPlay){
-        try{
+    public static void playMessage(Playback client, byte[] dataToPlay) {
+        try {
             client.openLineForPlayback();
             client.play(dataToPlay);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
-    public static void sendData(byte[] dataToSend)
-    {
+    public static void sendData(byte[] dataToSend) {
         try {
             CallerConnection ex = new CallerConnection("127.0.0.1", 8012);
             ex.Open();
             ex.Write(dataToSend);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -78,6 +73,6 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-         return null;
+        return null;
     }
 }
