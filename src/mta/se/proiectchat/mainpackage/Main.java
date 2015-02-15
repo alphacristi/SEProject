@@ -20,7 +20,7 @@ public class Main {
      */
     public static void main(String args[]) {
 
-        // Setup.setup("cristi","password"); // pentru generarea javakeytool si certificat
+
         String username = "";
         String password = "";
 
@@ -30,7 +30,7 @@ public class Main {
             System.out.println("Please enter the password :");
             password = Main.getPassword();
 
-            //TODO : in asteptarea unui apel, instantierea clasei pentru apeluri
+            //TODO :  instantierea clasei pentru apeluri, apelata metoda pentru asteptare de apeluri
 
 
         } else {
@@ -57,7 +57,7 @@ public class Main {
                     password = Main.getPassword();
                     String ip = args[0].substring(4);
 
-                    //TODO: inceputul unui apel, instantierea clasei pentru apeluri
+                    //TODO: instantierea clasei pentru apeluri, apelata metoda pentru apel catre un ip
                 } else
                     Main.Help();
             }
@@ -115,8 +115,8 @@ public class Main {
      */
     public static void Help() {
         System.out.println();
-        System.out.println("For setup : java MainClassFile -setup ");
-        System.out.println("For calling an ip: java MainClassFile -ip=XX.XX.XX.XX ");
+        System.out.println("For setup          : java MainClassFile -setup ");
+        System.out.println("For calling an ip  : java MainClassFile -ip=XX.XX.XX.XX ");
         System.out.println("For waiting an call: java MainClassFile ");
     }
 }
