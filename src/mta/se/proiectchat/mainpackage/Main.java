@@ -7,6 +7,7 @@ import mta.se.proiectchat.mainpackage.tcpconnctionpackage.CallerConnection;
 import java.awt.*;
 import java.io.Console;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.time.chrono.MinguoChronology;
 import java.util.logging.ConsoleHandler;
 
@@ -30,7 +31,8 @@ public class Main {
             System.out.println("Please enter the password :");
             password = Main.getPassword();
 
-            //TODO :  instantierea clasei pentru apeluri, apelata metoda pentru asteptare de apeluri
+            EstablishSecureConnection secureComunication = new EstablishSecureConnection(username, password);
+            secureComunication.handleIncomingCall();
 
 
         } else {
@@ -57,7 +59,9 @@ public class Main {
                     password = Main.getPassword();
                     String ip = args[0].substring(4);
 
-                    //TODO: instantierea clasei pentru apeluri, apelata metoda pentru apel catre un ip
+                    EstablishSecureConnection secureComunication = new EstablishSecureConnection(username, password);
+                    secureComunication.call(ip);
+
                 } else
                     Main.Help();
             }

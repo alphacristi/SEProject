@@ -20,6 +20,9 @@ public class AES {
     SecretKeySpec key;
     Cipher cipher;
 
+    int mode = -1;
+
+
     /**
      * This is the constructor
      *
@@ -28,6 +31,7 @@ public class AES {
     public AES(byte[] _key) {
 
         key = new SecretKeySpec(_key, "AES");
+
         try {
             cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
         } catch (NoSuchAlgorithmException e) {
@@ -46,7 +50,10 @@ public class AES {
 
         byte[] out = null;
         try {
-            cipher.init(Cipher.ENCRYPT_MODE, this.key);
+            if (mode != 1) {
+                cipher.init(Cipher.ENCRYPT_MODE, this.key);
+                mode = 1;
+            }
             out = cipher.doFinal(in);
 
         } catch (InvalidKeyException e) {
@@ -71,7 +78,10 @@ public class AES {
 
         byte[] out = null;
         try {
-            cipher.init(Cipher.DECRYPT_MODE, this.key);
+            if (mode != 2) {
+                cipher.init(Cipher.DECRYPT_MODE, this.key);
+                mode = 2;
+            }
             out = cipher.doFinal(in);
 
         } catch (InvalidKeyException e) {

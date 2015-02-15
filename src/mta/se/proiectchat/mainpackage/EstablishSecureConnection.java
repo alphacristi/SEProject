@@ -11,10 +11,12 @@ import mta.se.proiectchat.mainpackage.tcpconnctionpackage.ServerConnection;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
+import java.util.Observable;
+
 /**
  * Created by ADY on 15.02.2015.
  */
-public class EstablishSecureConnection implements Runnable{
+public class EstablishSecureConnection implements Runnable {
 
     private volatile int state;
 
@@ -37,8 +39,8 @@ public class EstablishSecureConnection implements Runnable{
     CallerConnection client = null;
     ServerConnection server = null;
 
-    private Object lockTransmission = null;
-    private Object lockKey = null;
+    private Object lockTransmission = new Object();
+    private Object lockKey = new Object();
 
 
     public EstablishSecureConnection(String username, String password) {
@@ -49,9 +51,9 @@ public class EstablishSecureConnection implements Runnable{
 
         try {
             KeyStore keyStore = KeyStore.getInstance("JKS");
-            keyStore.load(new FileInputStream(getPrivateKeyPath()), password.toCharArray());
+            keyStore.load(new FileInputStream("SecureChatKeyStore.jks"), password.toCharArray());
 
-            FileInputStream certFileStream = new FileInputStream(getCertificatePath());
+            FileInputStream certFileStream = new FileInputStream("ChatCertificate.cer");
             certFileStream = null;
 
             KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(username, new KeyStore.PasswordProtection(password.toCharArray()));
@@ -60,70 +62,56 @@ public class EstablishSecureConnection implements Runnable{
 
         } catch (Exception e) {
 
-            System.out.print("You need to install application for this username "+username+" or check the password again!");
+            System.out.print("You need to setup the application for this username " + username + " or check the password again!");
             System.exit(-1);
         }
 
 
-        System.out.println("You are logged in");
+        System.out.println("You are signed in.");
 
-        (new Thread( this)).start();
+        (new Thread(this)).start();
     }
 
-    public String getCertificatePath() {
-        return getLocalUserDirectory() + "\\SecureChat.cer";
-    }
 
-    public String getPrivateKeyPath(){
-        return getLocalUserDirectory()+"\\securechat_conf.jks";
-    }
-
-    public String getLocalUserDirectory(){
-
-        return System.getenv("USERPROFILE");
-    }
-
-    public void call(String destinationIP)
-    {
+    public void call(String destinationIP) {
         byte[] dataToSend = null;
         byte[] cipherText = null;
         state = connected;
         try {
-             client = new CallerConnection(destinationIP, portForListen);
+            client = new CallerConnection(destinationIP, portForListen);
             client.Open();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         Handshake handshakeUsed = new Handshake();
-        keyUsed =  handshakeUsed.establishAESkey(username, password, getCertificatePath(), client);
+        keyUsed = handshakeUsed.establishAESkey(username, password, "ChatCertificate.cer", client);
 
-        synchronized (lockKey){
+        synchronized (lockKey) {
             lockKey.notify();
         }
 
-       clientRecord =new Records();
-       clientRecord.openPickupLine();
+        clientRecord = new Records();
+        clientRecord.openPickupLine();
 
         AES cipherUsed = new AES(keyUsed);
 
 
-        System.out.println("Start talking...");
-        System.out.print("\nTransfered data: 0 bytes");
+        System.out.println("Conversation started.");
+        System.out.print("\nData: 0 bytes");
 
         int size = 0;
 
-        while(true){
+        while (true) {
 
             dataToSend = clientRecord.captureAudioData();
             cipherText = cipherUsed.encrypt(dataToSend);
             size += cipherText.length;
-            System.out.print("\rTransfered data: "+size+" bytes");
+            System.out.print("\rData: " + size + " bytes");
 
             try {
                 client.Write(cipherText);
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 System.out.println("\nA connection error was detected!!! Please try again");
                 System.exit(-1);
             }
@@ -131,19 +119,18 @@ public class EstablishSecureConnection implements Runnable{
         }
 
 
-
     }
 
 
-    public void handleIncomingCall(){
+    public void handleIncomingCall() {
 
         try {
             System.out.println("Waiting for any call...");
-            synchronized (lockTransmission){
+            synchronized (lockTransmission) {
                 lockTransmission.wait();
             }
 
-            client = new CallerConnection(((ServerConnection)server).getRemoteIP(),portForListen);
+            client = new CallerConnection(((ServerConnection) server).getRemoteIP(), portForListen);
             client.Open();
 
             clientRecord = new Records();
@@ -151,39 +138,39 @@ public class EstablishSecureConnection implements Runnable{
 
             AES cipherUsed = new AES(keyUsed);
 
-            synchronized (lockKey){
+            synchronized (lockKey) {
                 lockKey.notify();
             }
 
-            byte[] dataToSend =null;
-            byte[] cipherText= null;
+            byte[] dataToSend = null;
+            byte[] cipherText = null;
 
             System.out.println("Start talking...");
             System.out.print("\rTransfered data: 0 bytes");
             int size = 0;
 
-            while(true){
+            while (true) {
 
                 dataToSend = clientRecord.captureAudioData();
                 cipherText = cipherUsed.encrypt(dataToSend);
                 size += cipherText.length;
-                System.out.print("\rTransfered data: "+size+" bytes");
+                System.out.print("\rTransfered data: " + size + " bytes");
                 client.Write(cipherText);
             }
 
         } catch (Exception e) {
-            System.out.println("\nA connection error was detected!!! Please try again");
+            System.out.println("\nA connection error was detected!!! Please try again !! ");
+            e.printStackTrace();
             System.exit(-1);
         }
 
     }
 
 
-    public void endCall(){
+    public void endCall() {
         client.Close();
         server.Close();
     }
-
 
 
     @Override
@@ -195,11 +182,11 @@ public class EstablishSecureConnection implements Runnable{
         clientPlayback = new Playback();
         clientPlayback.openLineForPlayback();
 
-        if (state == disconnected){
+        if (state == disconnected) {
             Handshake handshake = new Handshake();
             keyUsed = handshake.waitForHandshake(server);
-            synchronized (lockKey){
-                lockKey.notify();
+            synchronized (lockTransmission) {
+                lockTransmission.notify();
             }
         }
 
@@ -217,12 +204,12 @@ public class EstablishSecureConnection implements Runnable{
         byte[] encryptedData = cipherUsed.encrypt(new byte[Playback.dataSize]);
         byte[] plainData = null;
 
-        while (true){
+        while (true) {
 
             try {
-                encryptedData=server.Read();
+                encryptedData = server.Read();
             } catch (Exception e) {
-                System.out.println("\nA connection error was detected!!! Please try again");
+                System.out.println("\nA connection error was detected!!! Please try again ! ");
                 System.exit(-1);
             }
 
@@ -230,8 +217,7 @@ public class EstablishSecureConnection implements Runnable{
                 plainData = cipherUsed.decrypt(encryptedData);
 
                 clientPlayback.play(plainData);
-            }
-            catch (Exception e){
+            } catch (Exception e) {
                 continue;
             }
         }
