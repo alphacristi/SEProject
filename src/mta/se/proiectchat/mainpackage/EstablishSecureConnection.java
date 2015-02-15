@@ -1,0 +1,185 @@
+package mta.se.proiectchat.mainpackage;
+
+import mta.se.proiectchat.mainpackage.audiopackage.Playback;
+import mta.se.proiectchat.mainpackage.audiopackage.Records;
+import mta.se.proiectchat.mainpackage.cryptopackage.AES;
+import mta.se.proiectchat.mainpackage.cryptopackage.Handshake;
+import mta.se.proiectchat.mainpackage.tcpconnctionpackage.CallerConnection;
+import mta.se.proiectchat.mainpackage.tcpconnctionpackage.ServerConnection;
+
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.KeyStore;
+/**
+ * Created by ADY on 15.02.2015.
+ */
+public class EstablishSecureConnection implements Runnable{
+
+    private volatile int state;
+
+    private String username;
+    private String password;
+
+    public static int portForListen = 8012;
+
+    public static int connected = 1;
+
+    public static int disconnected = 0;
+
+
+    Records clientRecord = null;
+    Playback clientPlayback = null;
+
+
+    private byte[] keyUsed = null;
+
+    CallerConnection client = null;
+    ServerConnection server = null;
+
+    private Object lockTransmission = null;
+    private Object lockKey = null;
+
+
+    public EstablishSecureConnection(String username, String password) {
+        state = disconnected;
+
+        this.username = username;
+        this.password = password;
+
+        try {
+            KeyStore keyStore = KeyStore.getInstance("JKS");
+            keyStore.load(new FileInputStream(getPrivateKeyPath()), password.toCharArray());
+
+            FileInputStream certFileStream = new FileInputStream(getCertificatePath());
+            certFileStream = null;
+
+            KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(username, new KeyStore.PasswordProtection(password.toCharArray()));
+            if (privateKeyEntry == null)
+                throw new Exception();
+
+        } catch (Exception e) {
+
+            System.out.print("You need to install application for this username "+username+" or check the password again!");
+            System.exit(-1);
+        }
+
+
+        System.out.println("You are logged in");
+
+        (new Thread( this)).start();
+    }
+
+    public String getCertificatePath() {
+        return getLocalUserDirectory() + "\\SecureChat.cer";
+    }
+
+    public String getPrivateKeyPath(){
+        return getLocalUserDirectory()+"\\securechat_conf.jks";
+    }
+
+    public String getLocalUserDirectory(){
+
+        return System.getenv("USERPROFILE");
+    }
+
+    public void call(String destinationIP)
+    {
+        byte[] dataToSend = null;
+        byte[] cipherText = null;
+        state = connected;
+        try {
+             client = new CallerConnection(destinationIP, portForListen);
+            client.Open();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Handshake handshakeUsed = new Handshake();
+        keyUsed =  handshakeUsed.establishAESkey(username, password, getCertificatePath(), client);
+
+        synchronized (lockKey){
+            lockKey.notify();
+        }
+
+       clientRecord =new Records();
+       clientRecord.openPickupLine();
+
+        AES cipherUsed = new AES(keyUsed);
+
+
+        System.out.println("Start talking...");
+        System.out.print("\nTransfered data: 0 bytes");
+
+        int size = 0;
+
+        while(true){
+
+            dataToSend = clientRecord.captureAudioData();
+            cipherText = cipherUsed.encrypt(dataToSend);
+            size += cipherText.length;
+            System.out.print("\rTransfered data: "+size+" bytes");
+
+            try {
+                client.Write(cipherText);
+            }
+            catch (Exception ex) {
+                System.out.println("\nA connection error was detected!!! Please try again");
+                System.exit(-1);
+            }
+
+        }
+
+
+
+    }
+
+
+    public void handleIncomingCall(){
+
+        try {
+            System.out.println("Waiting for any call...");
+            synchronized (lockTransmission){
+                lockTransmission.wait();
+            }
+
+            client = new CallerConnection(((ServerConnection)server).getRemoteIP(),portForListen);
+            client.Open();
+
+            clientRecord = new Records();
+            clientRecord.openPickupLine();
+
+            AES cipherUsed = new AES(keyUsed);
+
+            synchronized (lockKey){
+                lockKey.notify();
+            }
+
+            byte[] dataToSend =null;
+            byte[] cipherText= null;
+
+            System.out.println("Start talking...");
+            System.out.print("\rTransfered data: 0 bytes");
+            int size = 0;
+
+            while(true){
+
+                dataToSend = clientRecord.captureAudioData();
+                cipherText = cipherUsed.encrypt(dataToSend);
+                size += cipherText.length;
+                System.out.print("\rTransfered data: "+size+" bytes");
+                client.Write(cipherText);
+            }
+
+        } catch (Exception e) {
+            System.out.println("\nA connection error was detected!!! Please try again");
+            System.exit(-1);
+        }
+
+    }
+
+    @Override
+    public void run() {
+
+    }
+}
