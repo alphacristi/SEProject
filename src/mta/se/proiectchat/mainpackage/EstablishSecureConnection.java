@@ -178,8 +178,63 @@ public class EstablishSecureConnection implements Runnable{
 
     }
 
+
+    public void endCall(){
+        client.Close();
+        server.Close();
+    }
+
+
+
     @Override
     public void run() {
+
+        server = new ServerConnection(portForListen);
+        server.Open();
+
+        clientPlayback = new Playback();
+        clientPlayback.openLineForPlayback();
+
+        if (state == disconnected){
+            Handshake handshake = new Handshake();
+            keyUsed = handshake.waitForHandshake(server);
+            synchronized (lockKey){
+                lockKey.notify();
+            }
+        }
+
+        AES cipherUsed = null;
+
+        synchronized (lockKey) {
+            try {
+                lockKey.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            cipherUsed = new AES(keyUsed);
+        }
+
+        byte[] encryptedData = cipherUsed.encrypt(new byte[Playback.dataSize]);
+        byte[] plainData = null;
+
+        while (true){
+
+            try {
+                encryptedData=server.Read();
+            } catch (Exception e) {
+                System.out.println("\nA connection error was detected!!! Please try again");
+                System.exit(-1);
+            }
+
+            try {
+                plainData = cipherUsed.decrypt(encryptedData);
+
+                clientPlayback.play(plainData);
+            }
+            catch (Exception e){
+                continue;
+            }
+        }
 
     }
 }
